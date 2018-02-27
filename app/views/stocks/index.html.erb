@@ -1,0 +1,7 @@
+<%= form_for @stock_form, url: {action: "create"} do |f| %>
+	<%= f.label :stock_symbol, "Symbol" %>
+	<%= f.text_field :stock_symbol %>
+	<%= date_field(:stock_form, :start_date) %>
+	<%= date_field(:stock_form, :end_date) %>
+	<%= f.submit "Run" %>
+<% end %>

@@ -1,0 +1,27 @@
+<p>Stocks</p>
+<p> <%= @stock_data.print_stocks_count %> </p>
+<table>
+	<thead></thead>
+		<tr>
+			<th>Date</th>
+			<th>Opening</th>
+			<th>Closing</th>
+			<th>Net</th>
+		</tr>
+		<% @stock_data.all_stocks.each do |stock| %>
+			<tr>
+				<td>
+					<%= stock.date %>
+				</td>
+				<td>
+					<%= stock.opening %>
+				</td>
+				<td>
+					<%= stock.closing %>
+				</td>
+				<td>
+					<%= stock.net %>
+				</td>
+			</tr>
+		<% end %>
+</table>
