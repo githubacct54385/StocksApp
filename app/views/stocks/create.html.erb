@@ -1,4 +1,7 @@
-<p>Stocks</p>
+<%= line_chart @chart %>
+<%= column_chart @chart %>
+<%= area_chart @chart %>
+
 <p> <%= @stock_data.print_stocks_count %> </p>
 <table>
 	<thead></thead>
@@ -25,3 +28,4 @@
 			</tr>
 		<% end %>
 </table>
+

@@ -8,9 +8,10 @@ end
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 5.1.4'
-# Use sqlite3 as the database for Active Record
-# gem 'sqlite3'
+# rest-client for talking to Google Finance API
 gem 'rest-client'
+# charkkick for charts
+gem "chartkick"
 # Use Puma as the app server
 gem 'puma', '~> 3.7'
 # Use SCSS for stylesheets
@@ -40,6 +41,7 @@ group :development, :test do
   # Adds support for Capybara system testing and selenium driver
   gem 'capybara', '~> 2.13'
   gem 'selenium-webdriver'
+  # sqlite for dev db
   gem 'sqlite3', '1.3.13'
 end
 
@@ -53,6 +55,7 @@ group :development do
 end
 
 group :production do
+  # pg for production db
   gem 'pg',  '0.20.0'
 end
 
