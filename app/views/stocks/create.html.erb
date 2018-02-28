@@ -1,7 +1,7 @@
-<%= line_chart @chart %>
-<%= column_chart @chart %>
-<%= area_chart @chart %>
+<% @min = @stock_data.min_price - 10 %>
+<% @max = @stock_data.max_price + 10 %>
 
+<%= line_chart @chart, min: @min, max: @max %>
 
 <!--<p> The highest profit you can make is <%= @profit %> </p>
 <p>The best day to buy <%= @stock_ticker %> is on <%= @profit_start %> </p>

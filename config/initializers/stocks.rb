@@ -31,6 +31,16 @@ module Stocks
       "net: #{stock.net}"
     end
 
+    # gets max stock price
+    def max_price
+      @stocks.map(&:opening).max
+    end
+
+    # gets min stock price
+    def min_price
+      @stocks.map(&:opening).min
+    end
+
     # gets the opening price for the stock on this date
     def price_at(date)
       @stocks.select { |stock| stock.date == date }.first.opening

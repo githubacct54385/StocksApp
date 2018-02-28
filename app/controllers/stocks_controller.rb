@@ -10,7 +10,7 @@ class StocksController < ApplicationController
 
   def validate_form
     if @stock_form[:stock_symbol].length.zero? ||
-       @stock_form[:stock_symbol].length > 6
+       @stock_form[:stock_symbol].length > 15
       @stock_form.errors.add(:stock_symbol,
                              'must not be empty or greater than 4 characters')
     end
