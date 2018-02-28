@@ -83,36 +83,6 @@ module Stocks
     end
   end
 
-  # Abstract Custom Error class
-  class CustomError < StandardError
-    def example
-      '$ StockSymbol=aapl '  \
-      'StartDate=2018-01-01 EndDate=2018-01-30 ruby <file-name.rb>'
-    end
-  end
-
-  # Exception for a missing StockSymbol
-  class MissingStockSymbolException < CustomError
-    def preamble
-      'Please include the StockSymbol environment variable'
-    end
-
-    def initialize(msg = "#{preamble}\n#{example}")
-      super(msg)
-    end
-  end
-
-  # Exception for a missing Start, End, or both
-  class MissingDatesException < CustomError
-    def preamble
-      'Please include the Start and End environment variables'
-    end
-
-    def initialize(msg = "#{preamble}\n#{example}")
-      super(msg)
-    end
-  end
-
   # Constants
   BASE_URL = 'https://finance.google.com/finance/historical'.freeze
 

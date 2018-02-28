@@ -20,13 +20,11 @@ class StocksController < ApplicationController
   end
 
   def query_stocks
-    @stock_data = Stocks.do_stocks(stocks_params[:stock_symbol],
-                                   stocks_params[:start_date],
-                                   stocks_params[:end_date])
-
     # analyze the stocks for the best time to buy and sell your stock
     @profit, @profit_start, @profit_end = Stocks.run_analysis(@stock_data)
-
+    # @stock_ticker = stocks_params[:stock_symbol]
+    @starting_date_price = @stock_data.price_at(@profit_start)
+    @ending_date_price = @stock_data.price_at(@profit_end)
     # Print a chart with your stocks
     @chart = my_chart
   end
@@ -35,33 +33,38 @@ class StocksController < ApplicationController
     !@stock_form.errors.messages.empty?
   end
 
+  def init_instance_vars(stocks_params)
+    @stock_ticker = stocks_params[:stock_symbol]
+    @start_date = stocks_params[:start_date]
+    @end_date = stocks_params[:end_date]
+    @stock_form = StockForm.new(stocks_params)
+  end
+
+  def do_stocks
+    Stocks.do_stocks(@stock_ticker,
+                     @start_date,
+                     @end_date)
+  end
+
+  def render_stocks
+    @stock_data = do_stocks
+    if @stock_data.all_stocks.length < 2
+      @stock_form.errors.add(:num_stocks,
+                             'there must be at least two stocks in the array')
+      render 'index'
+    else
+      query_stocks
+    end
+  end
+
   def create
     # Gather stock data using the form
-    @stock_form = StockForm.new(stocks_params)
+    init_instance_vars(stocks_params)
     validate_form
-    # puts @stock_form.errors.messages.inspect
     if forms_errors?
       render 'index'
     else
-      @stock_data = Stocks.do_stocks(stocks_params[:stock_symbol],
-                                     stocks_params[:start_date],
-                                     stocks_params[:end_date])
-
-      # puts @stock_data.all_stocks.inspect
-      if @stock_data.all_stocks.length < 2
-        @stock_form.errors.add(:num_stocks,
-                               'there must be at least two stocks in the array')
-        render 'index'
-      else
-        # analyze the stocks for the best time to buy and sell your stock
-        @profit, @profit_start, @profit_end = Stocks.run_analysis(@stock_data)
-        @stock_ticker = stocks_params[:stock_symbol]
-        @starting_date_price = @stock_data.price_at(@profit_start)
-        @ending_date_price = @stock_data.price_at(@profit_end)
-
-        # Print a chart with your stocks
-        @chart = my_chart
-      end
+      render_stocks
     end
   end
 
