@@ -1,4 +1,5 @@
 <%= form_for @stock_form, url: {action: "create"} do |f| %>
+  <%= render 'shared/error_messages', object: f.object %>
 	<%= f.label :stock_symbol, "Symbol" %>
 	<%= f.text_field :stock_symbol %>
 	<%= date_field(:stock_form, :start_date) %>

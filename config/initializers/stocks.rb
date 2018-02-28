@@ -31,6 +31,11 @@ module Stocks
       "net: #{stock.net}"
     end
 
+    # gets the opening price for the stock on this date
+    def price_at(date)
+      @stocks.select { |stock| stock.date == date }.first.opening
+    end
+
     def latest_stock_date
       return '1970-01-01' if @stocks.empty?
       @stocks.map(&:date).max
@@ -112,6 +117,45 @@ module Stocks
     @end_date = end_date
   end
 
+  def self.init_profit_analysis_vars(stocks_list)
+    @index = 1
+    @max_profit = 0
+    @min_stock_price = stocks_list.first.opening
+    @start_date = stocks_list.first.date
+    @end_date = Date.parse('1970-01-01')
+  end
+
+  def self.decreasing_stock_price(opening_price, min_stock_price)
+    (opening_price - min_stock_price) < 0
+  end
+
+  def self.new_max_profit(curr_max_profit, max_profit, date, curr_date)
+    return [max_profit, curr_date] if curr_max_profit.to_i <= max_profit.to_i
+    # new max profit, record the end date
+    max_profit = curr_max_profit
+    end_date = date
+    [max_profit, end_date]
+  end
+
+  def self.compute_profit(stock)
+    curr_stock = stock
+    curr_max_profit = [0, curr_stock.opening - @min_stock_price].max
+    if decreasing_stock_price(curr_stock.opening, @min_stock_price)
+      @start_date = curr_stock.date
+    end
+    @min_stock_price = [@min_stock_price, curr_stock.opening].min
+    @max_profit, @end_date =
+      new_max_profit(curr_max_profit, @max_profit, curr_stock.date, @end_date)
+    @index += 1
+  end
+
+  def self.run_analysis(stock_data)
+    stocks_list = stock_data.all_stocks
+    init_profit_analysis_vars(stocks_list)
+    compute_profit(stocks_list[@index]) while @index < stocks_list.length
+    [@max_profit.round(2), @start_date, @end_date]
+  end
+
   def self.do_stocks(symbol, start_date, end_date)
     init_instance_vars(symbol, start_date, end_date)
     stocks = if date_diff(start_date, end_date).to_i <= 30
@@ -173,7 +217,7 @@ module Stocks
       end
     end
     populate_stock_prices(dates, opening_values, closing_values)
-end
+  end
 
   def self.gather_data(url)
     # query the raw data

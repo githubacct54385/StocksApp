@@ -2,6 +2,38 @@
 <%= column_chart @chart %>
 <%= area_chart @chart %>
 
+
+<!--<p> The highest profit you can make is <%= @profit %> </p>
+<p>The best day to buy <%= @stock_ticker %> is on <%= @profit_start %> </p>
+<p>And sell on <%= @profit_end %> </p>-->
+
+<table>
+	<tr>
+		<td>
+			The highest profit you can make is 
+		</td>
+		<td>
+			$<%= @profit %>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			The best day to buy <%= @stock_ticker %> is on 
+		</td>
+		<td>
+			<%= @profit_start %> for <%= @starting_date_price %>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			And sell on 
+		</td>
+		<td>
+			<%= @profit_end %> for <%= @ending_date_price %>
+		</td>
+	</tr>
+</table>
+
 <p> <%= @stock_data.print_stocks_count %> </p>
 <table>
 	<thead></thead>
@@ -28,4 +60,3 @@
 			</tr>
 		<% end %>
 </table>
-

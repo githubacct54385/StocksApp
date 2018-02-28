@@ -4,48 +4,74 @@ class StocksController < ApplicationController
     @stock_form = StockForm.new
   end
 
-  def create
+  def neg_date_range(start_d, end_d)
+    Date.parse(start_d) > Date.parse(end_d)
+  end
+
+  def validate_form
+    if @stock_form[:stock_symbol].length.zero? ||
+       @stock_form[:stock_symbol].length > 6
+      @stock_form.errors.add(:stock_symbol,
+                             'must not be empty or greater than 4 characters')
+    end
+    if @stock_form[:start_date] >= @stock_form[:end_date]
+      @stock_form.errors.add(:start_date, 'must be less than the end date')
+    end
+  end
+
+  def query_stocks
     @stock_data = Stocks.do_stocks(stocks_params[:stock_symbol],
                                    stocks_params[:start_date],
                                    stocks_params[:end_date])
-    # @stock_data
-    # @chart = chart_for_stocks
-    # puts @chart
-    # puts chart2
-    @chart = chart2
+
+    # analyze the stocks for the best time to buy and sell your stock
+    @profit, @profit_start, @profit_end = Stocks.run_analysis(@stock_data)
+
+    # Print a chart with your stocks
+    @chart = my_chart
   end
 
-  def chart_for_stocks
-    chart_text = "line_chart [\n"
-    @stock_data.all_stocks.each_with_index do |stock, index|
-      add_text = if index == (@stock_data.all_stocks.length - 1)
-                   "['#{stock.date}', #{stock.opening}]"
-                 else
-                   "['#{stock.date}', #{stock.opening}],"
-                 end
-      chart_text += add_text
+  def forms_errors?
+    !@stock_form.errors.messages.empty?
+  end
+
+  def create
+    # Gather stock data using the form
+    @stock_form = StockForm.new(stocks_params)
+    validate_form
+    # puts @stock_form.errors.messages.inspect
+    if forms_errors?
+      render 'index'
+    else
+      @stock_data = Stocks.do_stocks(stocks_params[:stock_symbol],
+                                     stocks_params[:start_date],
+                                     stocks_params[:end_date])
+
+      # puts @stock_data.all_stocks.inspect
+      if @stock_data.all_stocks.length < 2
+        @stock_form.errors.add(:num_stocks,
+                               'there must be at least two stocks in the array')
+        render 'index'
+      else
+        # analyze the stocks for the best time to buy and sell your stock
+        @profit, @profit_start, @profit_end = Stocks.run_analysis(@stock_data)
+        @stock_ticker = stocks_params[:stock_symbol]
+        @starting_date_price = @stock_data.price_at(@profit_start)
+        @ending_date_price = @stock_data.price_at(@profit_end)
+
+        # Print a chart with your stocks
+        @chart = my_chart
+      end
     end
-    chart_text += "\n]"
   end
 
-  def chart2
+  def my_chart
     array = []
     @stock_data.all_stocks.each do |stock|
-      # puts [ stock.date, stock.opening ]
       array << [stock.date, stock.opening]
     end
     array
   end
-
-  # line_chart [
-  #	['2018-01-01', 170],
-  #	['2018-01-02', 171]
-  # ]
-  # end
-
-  # line_chart [
-# [2018-02-26, 176.35],[2018-02-23, 173.67],[2018-02-22, 171.8],[2018-02-21, 172.83],[2018-02-20, 172.05],[2018-02-16, 172.36],[2018-02-15, 169.79],[2018-02-14, 163.04],[2018-02-13, 161.95],[2018-02-12, 158.5],[2018-02-09, 157.07],[2018-02-08, 160.29],[2018-02-07, 163.08],[2018-02-06, 154.83],[2018-02-05, 159.1]
-# ]
 
   private
 
