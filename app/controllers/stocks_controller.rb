@@ -12,19 +12,23 @@ class StocksController < ApplicationController
     if @stock_form[:stock_symbol].length.zero? ||
        @stock_form[:stock_symbol].length > 15
       @stock_form.errors.add(:stock_symbol,
-                             'must not be empty or greater than 4 characters')
+                             'must not be empty or greater than 15 characters')
     end
     if @stock_form[:start_date] >= @stock_form[:end_date]
       @stock_form.errors.add(:start_date, 'must be less than the end date')
     end
+    # TODO: Finish this code here and in config/initializers/stocks.rb
+    # if Stocks.invalid_symbol?(@stock_form[:stock_symbol])
+    #   @stock_form.errors.add(:stock_symbol, 'is not a valid stock ticker')
+    # end
   end
 
   def query_stocks
     # analyze the stocks for the best time to buy and sell your stock
     @profit, @profit_start, @profit_end = Stocks.run_analysis(@stock_data)
-    # @stock_ticker = stocks_params[:stock_symbol]
     @starting_date_price = @stock_data.price_at(@profit_start)
     @ending_date_price = @stock_data.price_at(@profit_end)
+    puts @profit_end
     # Print a chart with your stocks
     @chart = my_chart
   end
@@ -41,9 +45,10 @@ class StocksController < ApplicationController
   end
 
   def do_stocks
-    Stocks.do_stocks(@stock_ticker,
-                     @start_date,
-                     @end_date)
+    stocks = Stocks.do_stocks(@stock_ticker,
+                              @start_date,
+                              @end_date)
+    stocks
   end
 
   def render_stocks
@@ -71,7 +76,8 @@ class StocksController < ApplicationController
   def my_chart
     array = []
     @stock_data.all_stocks.each do |stock|
-      array << [stock.date, stock.opening]
+      array << [stock.date, stock.closing] if stock.opening.nil?
+      array << [stock.date, stock.opening] unless stock.opening.nil?
     end
     array
   end

@@ -9,6 +9,7 @@ module Stocks
   # Holds an array of opening and
   # closing stock prices with their respective dates
   class StockPrices
+    attr_reader :stock_symbol
     def initialize(stock_symbol, stocks_array = nil)
       @stocks = if stocks_array.nil?
                   []
@@ -33,17 +34,28 @@ module Stocks
 
     # gets max stock price
     def max_price
-      @stocks.map(&:opening).max
+      if @stocks.first.opening.nil?
+        @stocks.map(&:closing).max
+      else
+        @stocks.map(&:opening).max
+      end
     end
 
     # gets min stock price
     def min_price
-      @stocks.map(&:opening).min
+      if @stocks.first.opening.nil?
+        @stocks.map(&:closing).min
+      else
+        @stocks.map(&:opening).min
+      end
     end
 
     # gets the opening price for the stock on this date
     def price_at(date)
-      @stocks.select { |stock| stock.date == date }.first.opening
+      found_stock = @stocks.select { |stock| stock.date == date }.first
+      return nil if found_stock.nil?
+      found_stock.opening unless found_stock.opening.nil?
+      found_stock.closing if found_stock.opening.nil?
     end
 
     def latest_stock_date
@@ -100,7 +112,11 @@ module Stocks
   def self.init_profit_analysis_vars(stocks_list)
     @index = 1
     @max_profit = 0
-    @min_stock_price = stocks_list.first.opening
+    if stocks_list.first.opening.nil?
+      @min_stock_price = stocks_list.first.closing
+    else
+      @min_stock_price = stocks_list.first.opening
+    end
     @start_date = stocks_list.first.date
     @end_date = Date.parse('1970-01-01')
   end
@@ -119,11 +135,22 @@ module Stocks
 
   def self.compute_profit(stock)
     curr_stock = stock
-    curr_max_profit = [0, curr_stock.opening - @min_stock_price].max
-    if decreasing_stock_price(curr_stock.opening, @min_stock_price)
-      @start_date = curr_stock.date
+    if curr_stock.opening.nil?
+      curr_max_profit = [0, curr_stock.closing - @min_stock_price].max
+    else
+      curr_max_profit = [0, curr_stock.opening - @min_stock_price].max
     end
-    @min_stock_price = [@min_stock_price, curr_stock.opening].min
+    if curr_stock.opening.nil?
+      if decreasing_stock_price(curr_stock.closing, @min_stock_price)
+        @start_date = curr_stock.date
+      end
+      @min_stock_price = [@min_stock_price, curr_stock.closing].min
+    else
+      if decreasing_stock_price(curr_stock.opening, @min_stock_price)
+        @start_date = curr_stock.date
+      end
+      @min_stock_price = [@min_stock_price, curr_stock.opening].min
+    end
     @max_profit, @end_date =
       new_max_profit(curr_max_profit, @max_profit, curr_stock.date, @end_date)
     @index += 1
@@ -157,6 +184,7 @@ module Stocks
 
   def self.trim_data(data)
     parsed_data = data.css('.elastic').css('.g-unit').css('.g-c').css('.id-histform').css('.gf-table-wrapper').css('.gf-table')
+    return nil if parsed_data.first.nil?
     parsed = parsed_data.first.text.split("\n")
     trimmed = []
     parsed.each do |line|
@@ -172,31 +200,66 @@ module Stocks
 
   def self.populate_stock_prices(dates, opening_values, closing_values)
     stocks = StockPrices.new(@symbol)
-    dates.each_with_index do |_date, index|
-      net = compute_net(closing_values[index], opening_values[index], 2)
-      stocks.add_stock(
-        dates[index], opening_values[index], closing_values[index], net
-      )
+    if !dates.empty? && !opening_values.empty? && !closing_values.empty?
+      dates.each_with_index do |_date, index|
+        net = compute_net(closing_values[index], opening_values[index], 2)
+        stocks.add_stock(
+          dates[index], opening_values[index], closing_values[index], net
+        )
+      end
+    elsif dates.empty? == false && closing_values.empty? == false
+      dates.each_with_index do |_date, index|
+        net = 0
+        stocks.add_stock(
+          dates[index], nil, closing_values[index], net
+        )
+      end
     end
+    
     stocks
+  end
+
+  def self.count_dates(trimmed)
+    dates = []
+    trimmed.each do |element|
+      begin
+        dates << Date.parse(element)
+      rescue
+      end
+    end
   end
 
   def self.trimmed_data_to_stocks_prices(trimmed)
     dates = []
     opening_values = []
     closing_values = []
-    trimmed.each_with_index do |element, index|
-      if ((index + 6) % 6).zero?
-        dates << Date.parse(element)
-      elsif (index + 6) % 6 == 1
-        opening_values << element.to_f
-      elsif (index + 6) % 6 == 4
-        closing_values << element.to_f
-      elsif (index + 6) % 6 == 5
-        next # skip
+    dates_parsed = trimmed.select { |x| Date.parse(x) rescue nil }
+    if dates_parsed.length * 6 == trimmed.length
+      trimmed.each_with_index do |element, index|
+        if ((index + 6) % 6).zero?
+          dates << Date.parse(element)
+        elsif (index + 6) % 6 == 1
+          opening_values << element.to_f
+        elsif (index + 6) % 6 == 4
+          closing_values << element.to_f
+        elsif (index + 6) % 6 == 5
+          next # skip
+        end
+      end
+    elsif dates_parsed.length * 2 == trimmed.length
+      trimmed.each_with_index do |element, index|
+        if index.even?
+          dates << Date.parse(element)
+        else
+          closing_values << element.to_f
+        end
       end
     end
     populate_stock_prices(dates, opening_values, closing_values)
+  end
+
+  def self.missing_stock_ticker
+    'Missing Stock Ticker'
   end
 
   def self.gather_data(url)
@@ -205,6 +268,9 @@ module Stocks
 
     # trim the data
     trimmed = trim_data(data)
+
+    # if trimmed is nil, then you likely used an incorrect query
+    return StockPrices.new(missing_stock_ticker) if trimmed.nil?
 
     # place trimmed data into StocksPrices class
     trimmed_data_to_stocks_prices(trimmed)
@@ -271,4 +337,7 @@ module Stocks
     stock_prices.sort
     stock_prices
   end
+
+  # def self.invalid_symbol?(stock_symbol)
+  # end
 end
