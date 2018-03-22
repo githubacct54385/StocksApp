@@ -1,24 +1,5 @@
-# README
+# StocksApp
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
-
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+Given a stock ticker, a start and end date, find the best day to buy and sell the stock within that range.  
+Be sure to give the correct stock ticker.  
+This app uses Google Finance for stock information.  
