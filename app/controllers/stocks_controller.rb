@@ -23,12 +23,20 @@ class StocksController < ApplicationController
     # end
   end
 
+  def opening_values?(stock)
+    return true unless stock.opening.nil?
+    false
+    # opening_vals = @stock_data.select { |stk| !stk.opening.nil? }
+    # return true if @stock_data.any? { |stk| !stk.opening.nil? }
+    # false
+  end
+
   def query_stocks
     # analyze the stocks for the best time to buy and sell your stock
     @profit, @profit_start, @profit_end = Stocks.run_analysis(@stock_data)
     @starting_date_price = @stock_data.price_at(@profit_start)
     @ending_date_price = @stock_data.price_at(@profit_end)
-    puts @profit_end
+    # puts @profit_end
     # Print a chart with your stocks
     @chart = my_chart
   end
@@ -53,7 +61,8 @@ class StocksController < ApplicationController
 
   def render_stocks
     @stock_data = do_stocks
-    if @stock_data.all_stocks.length < 2
+    # puts @stock_data.stocks.inspect
+    if @stock_data.stocks.length < 2
       @stock_form.errors.add(:num_stocks,
                              'there must be at least two stocks in the array')
       render 'index'
@@ -75,7 +84,7 @@ class StocksController < ApplicationController
 
   def my_chart
     array = []
-    @stock_data.all_stocks.each do |stock|
+    @stock_data.stocks.each do |stock|
       array << [stock.date, stock.closing] if stock.opening.nil?
       array << [stock.date, stock.opening] unless stock.opening.nil?
     end

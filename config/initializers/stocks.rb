@@ -9,7 +9,7 @@ module Stocks
   # Holds an array of opening and
   # closing stock prices with their respective dates
   class StockPrices
-    attr_reader :stock_symbol
+    attr_reader :stock_symbol, :stocks
     def initialize(stock_symbol, stocks_array = nil)
       @stocks = if stocks_array.nil?
                   []
@@ -63,9 +63,9 @@ module Stocks
       @stocks.map(&:date).max
     end
 
-    def all_stocks
-      @stocks
-    end
+    # def all_stocks
+    #  @stocks
+    # end
 
     # sorts in descending order
     def sort
@@ -157,7 +157,7 @@ module Stocks
   end
 
   def self.run_analysis(stock_data)
-    stocks_list = stock_data.all_stocks
+    stocks_list = stock_data.stocks
     init_profit_analysis_vars(stocks_list)
     compute_profit(stocks_list[@index]) while @index < stocks_list.length
     [@max_profit.round(2), @start_date, @end_date]
@@ -318,7 +318,7 @@ module Stocks
   def self.stocks_array_from_results(results)
     stocks = []
     results.each do |result|
-      result.all_stocks.each do |stock|
+      result.stocks.each do |stock|
         stocks << stock
       end
     end
